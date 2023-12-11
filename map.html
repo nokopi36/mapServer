@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Leaflet Map with Click Event</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+</head>
+
+<body>
+    <div id="map" style="width: 100%; height: 100vh;"></div>
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+    <script>
+        // 地図の初期化
+        var map = L.map('map').setView([35.681236, 139.767125], 13); // 東京駅を中心に設定
+
+        // OpenStreetMapを地図のレイヤーとして追加
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 地図上のクリックイベントの処理
+        map.on('click', function (e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            //経緯度表示
+            // alert("lat: " + lat + ", lng: " + lng);
+
+            // Ajaxを使ってサーバーに緯度経度を送信
+            let method = "POST";
+            let body = JSON.stringify({ lat: lat, lng: lng });
+            let headers = { "Content-Type": "application/json" };
+            fetch("/post_coordinates", { method, headers, body })
+                .then(response => {
+                    if (response.ok) {
+                        return response.text();
+                    } else {
+                        throw new Error();
+                    }
+                })
+                .then(text => console.log(text))
+                .catch(error => console.error(error))
+        });
+    </script>
+</body>
+
+</html>
