@@ -1,41 +1,41 @@
-import sys
+import os
 from PIL import Image
-import glob
-import re
-
-def numericalSort(value):
-    numbers = re.compile(r'(\d+)')
-    parts = numbers.split(value)
-    parts[1::2] = map(int, parts[1::2])
-    return parts
-
-open_dir = sys.argv[2]
-save_dir = sys.argv[4]
-W_DIV = int(sys.argv[6]) # 横分割数
-H_DIV = int(sys.argv[8]) # 縦分割数
-path_all = sorted(glob.glob(open_dir + '*.jpg'), key=numericalSort)
-
-# print(open_dir + '\n' + save_dir + '\n' + sys.argv[6],sys.argv[8])
+import setting
 
 
-new_jpg_count = 1 # 新しくjpgファイルを作るときのファイル名用のカウンタ
+# 画像を任意の数に分割
+def split_all_images(
+    directory,
+    output_dir,
+    target_resolution=(setting.img_width, setting.img_height),
+    grid_size=(setting.grid_size_width, setting.grid_size_height),
+):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-for f in range(len(path_all)):		# 元の*.jpgごとのループ
-    # 元画像の読み出し
-    img = Image.open(path_all[f])
-    width, height = img.size
-    
-    # 分割画像の書き出し
-    for i in range(H_DIV):
-        for j in range(W_DIV):
-            #print(len(new_data[i][j]))
-            new_jpg_name = save_dir + "{0:04d}.jpg".format(new_jpg_count)
-            # print(new_jpg_name)
-            left = int((width / W_DIV ) * j)
-            right =  int((width / W_DIV ) * (j + 1))
-            upper = int((height / W_DIV ) * i)
-            lower = int((height / W_DIV ) * (i + 1))
-            #print("left={0}, upper={1}, right={2}, lower={3}".format(left,upper,right,lower))
-            img_crop = img.crop((left, upper, right, lower))
-            img_crop.save(new_jpg_name, quality=95)
-            new_jpg_count += 1    
+    for file_name in os.listdir(directory):
+        if file_name.lower().endswith((".png", ".jpg", ".jpeg")):
+            image_path = os.path.join(directory, file_name)
+            with Image.open(image_path) as img:
+                # 画像の解像度をチェック
+                if img.size == target_resolution:
+                    img_width, img_height = img.size
+                    tile_width = img_width // grid_size[0]
+                    tile_height = img_height // grid_size[1]
+
+                    for i in range(grid_size[0]):  # 横の分割数
+                        for j in range(grid_size[1]):  # 縦の分割数
+                            left = i * tile_width
+                            upper = j * tile_height
+                            right = left + tile_width
+                            lower = upper + tile_height
+                            cropped_img = img.crop((left, upper, right, lower))
+
+                            base_name = os.path.basename(image_path)
+                            file_name, file_ext = os.path.splitext(base_name)
+                            cropped_img.save(
+                                os.path.join(
+                                    output_dir,
+                                    f"{file_name}_{i * grid_size[1] + j + 1}{file_ext}",
+                                )
+                            )

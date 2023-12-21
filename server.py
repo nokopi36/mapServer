@@ -26,13 +26,13 @@ def map_setting():
 
 def send_file():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(("", 12345))  # 任意のポート
+    server_socket.bind((setting.server_ip, setting.sercer_port))  # 任意のポート
     server_socket.listen(1)
 
     client_socket, address = server_socket.accept()
     print(f"Connection from {address} has been established.")
 
-    with open("shotPoint.txt", "rb") as file:
+    with open(setting.send_file_name, "rb") as file:
         data = file.read(4096)
         while data:
             client_socket.send(data)
@@ -54,7 +54,7 @@ def index():
 @app.route("/post_coordinates_list", methods=["POST"])
 def post_coordinates():
     data = request.json
-    with open("shotPoint.txt", "w") as file:
+    with open(setting.send_file_name, "w") as file:
         for coordinate in data:
             lat = coordinate["lat"]
             lng = coordinate["lng"]
